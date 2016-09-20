@@ -10,7 +10,6 @@ import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
-import org.apache.http.ParseException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
@@ -372,6 +371,11 @@ public class HttpClientUtil{
 			//执行请求操作，并拿到结果（同步阻塞）
 			resp = (config.context()==null)?config.client().execute(request) : config.client().execute(request, config.context()) ;
 			
+			if(config.isReturnRespHeaders()){
+				//获取所有response的header信息
+				config.headers(resp.getAllHeaders());
+			}
+			
 			//获取结果实体
 			return resp;
 			
@@ -392,7 +396,7 @@ public class HttpClientUtil{
 	 * @return
 	 * @throws HttpProcessException 
 	 */
-	public static String fmt2String(HttpResponse resp, String encoding) throws HttpProcessException {
+	private static String fmt2String(HttpResponse resp, String encoding) throws HttpProcessException {
 		String body = "";
 		try {
 			if (resp.getEntity() != null) {
@@ -401,9 +405,9 @@ public class HttpClientUtil{
 				logger.debug(body);
 			}
 			EntityUtils.consume(resp.getEntity());
-		} catch (ParseException | IOException e) {
+		} catch (IOException e) {
 			throw new HttpProcessException(e);
-		}finally{
+		}finally{			
 			close(resp);
 		}
 		return body;
@@ -421,14 +425,14 @@ public class HttpClientUtil{
 		try {
 			resp.getEntity().writeTo(out);
 			EntityUtils.consume(resp.getEntity());
-		} catch (ParseException | IOException e) {
+		} catch (IOException e) {
 			throw new HttpProcessException(e);
 		}finally{
 			close(resp);
 		}
 		return out;
 	}
-
+	
 	/**
 	 * 根据请求方法名，获取request对象
 	 * 
